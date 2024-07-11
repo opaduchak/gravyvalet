@@ -1,13 +1,18 @@
+import logging
 from http import HTTPStatus
 
 from asgiref.sync import async_to_sync
 from django.http import HttpResponse
 
 from addon_service.authorized_storage_account.models import AuthorizedStorageAccount
-from addon_service.common.known_imps import AddonImpNumbers
+from addon_service.common import known_imps
+from addon_service.oauth1.extrenal_account_keys import ExternalAccountKeys
 from addon_service.oauth1.utils import get_access_token
 from addon_service.oauth_utlis import update_external_account_id
 from addon_service.osf_models.fields import decrypt_string
+
+
+logger = logging.getLogger(__name__)
 
 
 def oauth1_callback_view(request):
@@ -35,8 +40,14 @@ def oauth1_callback_view(request):
 
 
 def update_account_with_additional_data(account: AuthorizedStorageAccount, data: dict):
-    match account.external_service.int_addon_imp:
-        case AddonImpNumbers.ZOTERO_ORG:
-            account.external_account_id = data["userID"]
-    account.save()
+    imp_name = known_imps.get_imp_name(account.external_service.imp_cls)
+    try:
+        account.external_account_id = data[ExternalAccountKeys[imp_name]]
+        account.save()
+    except KeyError:
+        logger.debug(
+            f"Have not found external account key for {imp_name=}\n"
+            f"Either this account doesn't receive external account id from oauth exchange"
+            f"or there is a misconfiguration"
+        )
     async_to_sync(update_external_account_id)(account)
