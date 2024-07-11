@@ -14,7 +14,6 @@ from addon_toolkit import AddonImp
 if __debug__:
     from addon_imps.storage import my_blarg
 
-
 __all__ = (
     "AddonImpNumbers",
     "KnownAddonImps",
@@ -34,6 +33,10 @@ def get_imp_by_name(imp_name: str) -> type[AddonImp]:
 
 def get_imp_name(imp: type[AddonImp]) -> str:
     return KnownAddonImps(imp).name
+
+
+def get_imp_name_by_number(imp: int) -> str:
+    return AddonImpNumbers(imp).name
 
 
 def get_imp_by_number(imp_number: int) -> type[AddonImp]:
