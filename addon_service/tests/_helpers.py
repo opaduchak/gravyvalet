@@ -272,6 +272,6 @@ def patch_encryption_key_derivation():
         return b"\xdd\xd1\xdfN9\n\xbb\xa5\x9a|\xc6\x1f\xd6b\xf2\xfc>\x1e\xfe\xfd\x14\xc6n\xd7\x18\xbf'\x04qk\x8c\xfb"
 
     return patch(
-        "addon_service.credentials.encryption.hashlib.scrypt",
+        "addon_service.common.encryption.hashlib.scrypt",
         side_effect=_mock_scrypt,
     )

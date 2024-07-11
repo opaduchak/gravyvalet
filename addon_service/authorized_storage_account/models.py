@@ -15,6 +15,7 @@ from addon_service.common.service_types import ServiceTypes
 from addon_service.common.validators import validate_addon_capability
 from addon_service.credentials.models import ExternalCredentials
 from addon_service.oauth1 import utils as oauth1_utils
+from addon_service.oauth1.models import OAuth1TemporaryCredentials
 from addon_service.oauth2 import utils as oauth2_utils
 from addon_service.oauth2.models import (
     OAuth2ClientConfig,
@@ -24,10 +25,7 @@ from addon_toolkit import (
     AddonCapabilities,
     AddonImp,
 )
-from addon_toolkit.credentials import (
-    Credentials,
-    OAuth1Credentials,
-)
+from addon_toolkit.credentials import OAuth1Credentials
 from addon_toolkit.interfaces.storage import StorageConfig
 
 
@@ -73,8 +71,8 @@ class AuthorizedStorageAccount(AddonsServiceBaseModel):
         related_name="authorized_storage_account",
     )
     _temporary_oauth1_credentials = models.OneToOneField(
-        "addon_service.ExternalCredentials",
-        on_delete=models.CASCADE,
+        "addon_service.OAuth1TemporaryCredentials",
+        on_delete=models.SET_NULL,
         primary_key=False,
         null=True,
         blank=True,
@@ -116,20 +114,26 @@ class AuthorizedStorageAccount(AddonsServiceBaseModel):
     @property
     def credentials(self):
         if self._credentials:
-            return self._credentials.decrypted_credentials
+            return self._credentials.decrypted_dataclass
         return None
 
     @credentials.setter
     def credentials(self, credentials_data):
-        if self.temporary_oauth1_credentials:
+        if self._temporary_oauth1_credentials:
             self._temporary_oauth1_credentials.delete()
             self._temporary_oauth1_credentials = None
-        self._set_credentials("_credentials", credentials_data)
+        if not self._credentials:
+            self._credentials = ExternalCredentials.new()
+        try:
+            self._credentials.decrypted_dataclass = credentials_data
+            self._credentials.save()
+        except TypeError as e:
+            raise ValidationError(e)
 
     @property
     def temporary_oauth1_credentials(self) -> OAuth1Credentials | None:
         if self._temporary_oauth1_credentials:
-            return self._temporary_oauth1_credentials.decrypted_credentials
+            return self._temporary_oauth1_credentials.decrypted_dataclass
         return None
 
     @temporary_oauth1_credentials.setter
@@ -138,23 +142,11 @@ class AuthorizedStorageAccount(AddonsServiceBaseModel):
             raise ValidationError(
                 "Trying to set temporary credentials for non OAuth1A account"
             )
-        self._set_credentials("_temporary_oauth1_credentials", credentials_data)
-
-    def _set_credentials(self, credentials_field: str, credentials_data: Credentials):
-        creds_type = type(credentials_data)
-        if not hasattr(self, credentials_field):
-            raise ValidationError("Trying to set credentials to non-existing field")
-        if creds_type is not self.credentials_format.dataclass:
-            raise ValidationError(
-                f"Expected credentials of type type {self.credentials_format.dataclass}."
-                f"Got credentials of type {creds_type}."
-            )
-        if not getattr(self, credentials_field, None):
-            setattr(self, credentials_field, ExternalCredentials.new())
+        if not self._temporary_oauth1_credentials:
+            self._temporary_oauth1_credentials = OAuth1TemporaryCredentials.new()
         try:
-            creds = getattr(self, credentials_field)
-            creds.decrypted_credentials = credentials_data
-            creds.save()
+            self._temporary_oauth1_credentials.decrypted_dataclass = credentials_data
+            self._temporary_oauth1_credentials.save()
         except TypeError as e:
             raise ValidationError(e)
 
@@ -204,15 +196,18 @@ class AuthorizedStorageAccount(AddonsServiceBaseModel):
                 return self.oauth2_auth_url
             case CredentialsFormats.OAUTH1A:
                 return self.oauth1_auth_url
+        return None
 
     @property
-    def oauth1_auth_url(self) -> str:
+    def oauth1_auth_url(self) -> str | None:
         client_config = self.external_service.oauth1_client_config
-        if self._temporary_oauth1_credentials:
+        _temporary_creds = self.temporary_oauth1_credentials
+        if _temporary_creds:
             return oauth1_utils.build_auth_url(
                 auth_uri=client_config.auth_url,
-                temporary_oauth_token=self.temporary_oauth1_credentials.oauth_token,
+                temporary_oauth_token=_temporary_creds.oauth_token,
             )
+        return None
 
     @property
     def oauth2_auth_url(self) -> str | None:

@@ -5,26 +5,26 @@ from django.http import HttpResponse
 
 from addon_service.authorized_storage_account.models import AuthorizedStorageAccount
 from addon_service.common.known_imps import AddonImpNumbers
+from addon_service.oauth1.models import OAuth1TemporaryCredentials
 from addon_service.oauth1.utils import get_access_token
 from addon_service.oauth_utlis import update_external_account_id
-from addon_service.osf_models.fields import decrypt_string
 
 
 def oauth1_callback_view(request):
-    oauth_token = request.GET["oauth_token"]
+    temporary_oauth_token = request.GET["oauth_token"]
     oauth_verifier = request.GET["oauth_verifier"]
 
-    pk = decrypt_string(request.session.get("oauth1a_account_id"))
-    del request.session["oauth1a_account_id"]
-
-    account = AuthorizedStorageAccount.objects.get(pk=pk)
-
+    account = AuthorizedStorageAccount.objects.get(
+        _temporary_oauth1_credentials__in=OAuth1TemporaryCredentials.objects.filter_by_oauth1_temporary_token(
+            temporary_oauth_token
+        )
+    )
     oauth1_client_config = account.external_service.oauth1_client_config
     final_credentials, other_info = async_to_sync(get_access_token)(
         access_token_url=oauth1_client_config.access_token_url,
         oauth_consumer_key=oauth1_client_config.client_key,
         oauth_consumer_secret=oauth1_client_config.client_secret,
-        oauth_token=oauth_token,
+        oauth_token=temporary_oauth_token,
         oauth_token_secret=account.temporary_oauth1_credentials.oauth_token_secret,
         oauth_verifier=oauth_verifier,
     )
