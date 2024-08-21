@@ -40,9 +40,6 @@ class ConfiguredAddon(AddonsServiceBaseModel):
         base_account: AuthorizedAccount
         authorized_resource: ResourceReference
 
-    class Meta:
-        abstract = True
-
     @property
     def display_name(self):
         return self._display_name or self.base_account.display_name

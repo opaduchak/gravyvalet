@@ -30,8 +30,8 @@ class ConfiguredStorageAddon(ConfiguredAddon):
         resource_name = "configured-storage-addons"
 
     @property
-    def storage_imp_config(self) -> StorageConfig:
+    def config(self) -> StorageConfig:
         return dataclasses.replace(
-            self.base_account.storage_imp_config,
+            self.base_account.config,
             connected_root_id=self.root_folder,
         )

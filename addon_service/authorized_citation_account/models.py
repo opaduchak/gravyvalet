@@ -66,13 +66,13 @@ class AuthorizedCitationAccount(AuthorizedAccount):
         imp = await get_citation_addon_instance(
             self.imp_cls,
             self,
-            self.citation_imp_config,
+            self.config,
         )
         self.external_account_id = await imp.get_external_account_id(auth_extras or {})
         await self.asave()
 
     @property
-    def citation_imp_config(self) -> CitationConfig:
+    def config(self) -> CitationConfig:
         return CitationConfig(
             external_api_url=self.api_base_url,
             connected_root_id=self.default_root_folder,

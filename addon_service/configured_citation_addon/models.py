@@ -28,5 +28,5 @@ class ConfiguredCitationAddon(ConfiguredAddon):
         resource_name = "configured-citation-addons"
 
     @property
-    def citation_imp_config(self) -> CitationConfig:
-        return self.base_account.citation_imp_config
+    def config(self) -> CitationConfig:
+        return self.base_account.config
