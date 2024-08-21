@@ -66,13 +66,13 @@ class AuthorizedStorageAccount(AuthorizedAccount):
         imp = await get_storage_addon_instance(
             self.imp_cls,
             self,
-            self.storage_imp_config,
+            self.config,
         )
         self.external_account_id = await imp.get_external_account_id(auth_extras or {})
         await self.asave()
 
     @property
-    def storage_imp_config(self) -> StorageConfig:
+    def config(self) -> StorageConfig:
         return StorageConfig(
             max_upload_mb=self.external_service.max_upload_mb,
             external_api_url=self.api_base_url,

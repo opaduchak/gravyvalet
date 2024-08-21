@@ -19,6 +19,7 @@ class ExternalStorageServiceSerializer(ExternalServiceSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name=view_names.detail_view(RESOURCE_TYPE)
     )
+
     addon_imp = DataclassRelatedDataField(
         dataclass_model=AddonImpModel,
         related_link_view_name=view_names.related_view(RESOURCE_TYPE),

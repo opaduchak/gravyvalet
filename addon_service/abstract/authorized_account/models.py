@@ -11,12 +11,14 @@ from django.db import (
     transaction,
 )
 
+from addon_service.abstract.external_storage.models import ExternalService
 from addon_service.addon_operation.models import AddonOperationModel
 from addon_service.common.base_model import AddonsServiceBaseModel
 from addon_service.common.credentials_formats import CredentialsFormats
 from addon_service.common.service_types import ServiceTypes
 from addon_service.common.validators import validate_addon_capability
 from addon_service.credentials.models import ExternalCredentials
+from addon_service.external_storage_service.models import ExternalStorageService
 from addon_service.oauth1 import utils as oauth1_utils
 from addon_service.oauth2 import utils as oauth2_utils
 from addon_service.oauth2.models import (
@@ -64,9 +66,6 @@ class AuthorizedAccount(AddonsServiceBaseModel):
         validators=[validate_addon_capability]
     )
     _api_base_url = models.URLField(blank=True)
-
-    class Meta:
-        abstract = True
 
     @property
     def display_name(self):
@@ -212,7 +211,12 @@ class AuthorizedAccount(AddonsServiceBaseModel):
 
     @property
     def imp_cls(self) -> type[AddonImp]:
-        return self.external_service.addon_imp.imp_cls
+        if isinstance(self.external_service, ExternalService):
+            return self.external_service.addon_imp.imp_cls
+        try:
+            return self.authorizedstorageaccount.external_service.addon_imp.imp_cls
+        except ExternalStorageService.DoesNotExist:
+            return self.authorizedcitationaccount.external_service.addon_imp.imp_cls
 
     @property
     def credentials_available(self) -> bool:
