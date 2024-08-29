@@ -206,7 +206,7 @@ class AuthorizedAccount(AddonsServiceBaseModel):
     @api_base_url.setter
     def api_base_url(self, value: str):
         self._api_base_url = (
-            "" if value == self.external_service.api_base_url else value
+            "" if (value == self.external_service.api_base_url or not value) else value
         )
 
     @property
