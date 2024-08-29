@@ -1,4 +1,5 @@
 import traceback
+from functools import cached_property
 
 import jsonschema
 from django.core.exceptions import ValidationError
@@ -41,7 +42,7 @@ class AddonOperationInvocation(AddonsServiceBaseModel):
     class JSONAPIMeta:
         resource_name = "addon-operation-invocations"
 
-    @property
+    @cached_property
     def account(self):
         if not self.thru_account:
             return None
@@ -50,7 +51,7 @@ class AddonOperationInvocation(AddonsServiceBaseModel):
         except AuthorizedStorageAccount.DoesNotExist:
             return self.thru_account.authorizedcitationaccount
 
-    @property
+    @cached_property
     def addon(self):
         if not self.thru_addon:
             return None
