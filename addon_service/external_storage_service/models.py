@@ -26,32 +26,13 @@ class SupportedFeatures(Flag):
 
 def validate_supported_features(value):
     _validate_enum_value(SupportedFeatures, value)
+from addon_service.authorized_storage_account.models import AuthorizedStorageAccount
 
 
 class ExternalStorageService(ExternalService):
-    int_addon_imp = models.IntegerField(
-        null=False,
-        validators=[validate_storage_imp_number],
-        verbose_name="Addon implementation",
-    )
     max_concurrent_downloads = models.IntegerField(null=False)
     max_upload_mb = models.IntegerField(null=False)
-    wb_key = models.CharField(null=False, blank=True, default="")
-    oauth1_client_config = models.ForeignKey(
-        "addon_service.OAuth1ClientConfig",
-        on_delete=models.SET_NULL,
-        related_name="external_storage_services",
-        null=True,
-        blank=True,
-    )
 
-    oauth2_client_config = models.ForeignKey(
-        "addon_service.OAuth2ClientConfig",
-        on_delete=models.SET_NULL,
-        related_name="external_storage_services",
-        null=True,
-        blank=True,
-    )
     int_supported_features = models.IntegerField(
         validators=[validate_supported_features], null=True
     )
@@ -65,6 +46,14 @@ class ExternalStorageService(ExternalService):
     def supported_features(self, new_supported_features: SupportedFeatures):
         """set int_authorized_capabilities without caring its int"""
         self.int_supported_features = new_supported_features.value
+
+    def clean(self):
+        super().clean()
+        validate_storage_imp_number(self.int_addon_imp)
+
+    @property
+    def authorized_storage_accounts(self):
+        return AuthorizedStorageAccount.objects.filter(external_service=self)
 
     class Meta:
         verbose_name = "External Storage Service"

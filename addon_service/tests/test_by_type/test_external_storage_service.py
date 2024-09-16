@@ -74,7 +74,7 @@ class TestExternalStorageServiceModel(TestCase):
         _accounts = set(
             _factories.AuthorizedStorageAccountFactory.create_batch(
                 size=3,
-                external_storage_service=self._ess,
+                external_service=self._ess,
             )
         )
         self.assertEqual(

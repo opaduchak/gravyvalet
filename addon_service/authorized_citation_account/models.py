@@ -2,7 +2,6 @@ from django.db import models
 
 from addon_service.abstract.authorized_account.models import AuthorizedAccount
 from addon_service.addon_imp.instantiation import get_citation_addon_instance
-from addon_service.external_citation_service.models import ExternalCitationService
 from addon_toolkit.interfaces.citation import CitationConfig
 
 
@@ -15,41 +14,6 @@ class AuthorizedCitationAccount(AuthorizedAccount):
 
     default_root_folder = models.CharField(blank=True)
 
-    external_citation_service = models.ForeignKey(
-        "addon_service.ExternalCitationService",
-        on_delete=models.CASCADE,
-        related_name="authorized_citation_accounts",
-    )
-
-    account_owner = models.ForeignKey(
-        "addon_service.UserReference",
-        on_delete=models.CASCADE,
-        related_name="authorized_citation_accounts",
-    )
-    _credentials = models.OneToOneField(
-        "addon_service.ExternalCredentials",
-        on_delete=models.CASCADE,
-        primary_key=False,
-        null=True,
-        blank=True,
-        related_name="authorized_citation_account",
-    )
-    _temporary_oauth1_credentials = models.OneToOneField(
-        "addon_service.ExternalCredentials",
-        on_delete=models.CASCADE,
-        primary_key=False,
-        null=True,
-        blank=True,
-        related_name="temporary_authorized_citation_account",
-    )
-    oauth2_token_metadata = models.ForeignKey(
-        "addon_service.OAuth2TokenMetadata",
-        on_delete=models.CASCADE,  # probs not
-        null=True,
-        blank=True,
-        related_name="authorized_citation_accounts",
-    )
-
     class Meta:
         verbose_name = "Authorized Citation Account"
         verbose_name_plural = "Authorized Citation Accounts"
@@ -57,10 +21,6 @@ class AuthorizedCitationAccount(AuthorizedAccount):
 
     class JSONAPIMeta:
         resource_name = "authorized-citation-accounts"
-
-    @property
-    def external_service(self) -> ExternalCitationService:
-        return self.external_citation_service
 
     async def execute_post_auth_hook(self, auth_extras: dict | None = None):
         imp = await get_citation_addon_instance(

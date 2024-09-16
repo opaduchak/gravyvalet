@@ -22,6 +22,7 @@ class UserReferenceSerializer(serializers.HyperlinkedModelSerializer):
 
     authorized_storage_accounts = HyperlinkedRelatedField(
         many=True,
+        source="authorized_accounts",
         queryset=AuthorizedStorageAccount.objects.all(),
         related_link_view_name=view_names.related_view(RESOURCE_TYPE),
     )

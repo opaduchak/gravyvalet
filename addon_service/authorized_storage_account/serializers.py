@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as ModelValidationError
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import (
     HyperlinkedRelatedField,
@@ -21,7 +20,6 @@ from addon_service.models import (
     ExternalStorageService,
     UserReference,
 )
-from addon_toolkit import AddonCapabilities
 
 
 RESOURCE_TYPE = get_resource_type_from_model(AuthorizedStorageAccount)
@@ -31,10 +29,12 @@ class AuthorizedStorageAccountSerializer(AuthorizedAccountSerializer):
     external_storage_service = ResourceRelatedField(
         queryset=ExternalStorageService.objects.all(),
         many=False,
+        source="external_service",
         related_link_view_name=view_names.related_view(RESOURCE_TYPE),
     )
     configured_storage_addons = HyperlinkedRelatedField(
         many=True,
+        source="configured_addons",
         queryset=ConfiguredStorageAddon.objects.active(),
         related_link_view_name=view_names.related_view(RESOURCE_TYPE),
         required=False,
@@ -58,29 +58,6 @@ class AuthorizedStorageAccountSerializer(AuthorizedAccountSerializer):
         "configured_storage_addons": "addon_service.serializers.ConfiguredStorageAddonSerializer",
         "authorized_operations": "addon_service.serializers.AddonOperationSerializer",
     }
-
-    def create_authorized_account(
-        self,
-        external_storage_service: ExternalStorageService,
-        authorized_capabilities: AddonCapabilities,
-        display_name: str = "",
-        api_base_url: str = "",
-        **kwargs,
-    ) -> AuthorizedStorageAccount:
-        session_user_uri = self.context["request"].session.get("user_reference_uri")
-        account_owner, _ = UserReference.objects.get_or_create(
-            user_uri=session_user_uri
-        )
-        try:
-            return AuthorizedStorageAccount.objects.create(
-                _display_name=display_name,
-                external_storage_service=external_storage_service,
-                account_owner=account_owner,
-                authorized_capabilities=authorized_capabilities,
-                api_base_url=api_base_url,
-            )
-        except ModelValidationError as e:
-            raise serializers.ValidationError(e)
 
     class Meta:
         model = AuthorizedStorageAccount

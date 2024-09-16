@@ -8,7 +8,6 @@ from django.db import models
 from addon_service.addon_operation.models import AddonOperationModel
 from addon_service.common.base_model import AddonsServiceBaseModel
 from addon_service.common.validators import validate_addon_capability
-from addon_service.resource_reference.models import ResourceReference
 from addon_toolkit import (
     AddonCapabilities,
     AddonImp,
@@ -17,6 +16,7 @@ from addon_toolkit import (
 
 if TYPE_CHECKING:
     from addon_service.abstract.authorized_account.models import AuthorizedAccount
+    from addon_service.resource_reference.models import ResourceReference
 
 
 class ConnectedAddonManager(models.Manager):
@@ -34,6 +34,16 @@ class ConfiguredAddon(AddonsServiceBaseModel):
     _display_name = models.CharField(null=False, blank=True, default="")
     int_connected_capabilities = models.IntegerField(
         validators=[validate_addon_capability]
+    )
+    base_account = models.ForeignKey(
+        "addon_service.AuthorizedAccount",
+        on_delete=models.CASCADE,
+        related_name="configured_addons",
+    )
+    authorized_resource = models.ForeignKey(
+        "addon_service.ResourceReference",
+        on_delete=models.CASCADE,
+        related_name="configured_addons",
     )
 
     if TYPE_CHECKING:
@@ -73,6 +83,8 @@ class ConfiguredAddon(AddonsServiceBaseModel):
 
     @resource_uri.setter
     def resource_uri(self, uri: str):
+        from addon_service.resource_reference.models import ResourceReference
+
         _resource_ref, _ = ResourceReference.objects.get_or_create(resource_uri=uri)
         self.authorized_resource = _resource_ref
 

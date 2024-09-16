@@ -8,17 +8,6 @@ class ConfiguredCitationAddon(ConfiguredAddon):
 
     root_folder = models.CharField(blank=True)
 
-    base_account = models.ForeignKey(
-        "addon_service.AuthorizedCitationAccount",
-        on_delete=models.CASCADE,
-        related_name="configured_citation_addons",
-    )
-    authorized_resource = models.ForeignKey(
-        "addon_service.ResourceReference",
-        on_delete=models.CASCADE,
-        related_name="configured_citation_addons",
-    )
-
     class Meta:
         verbose_name = "Configured Citation Addon"
         verbose_name_plural = "Configured Citation Addons"
@@ -29,4 +18,4 @@ class ConfiguredCitationAddon(ConfiguredAddon):
 
     @property
     def config(self) -> CitationConfig:
-        return self.base_account.config
+        return self.base_account.authorizedcitationaccount.config
