@@ -1,6 +1,3 @@
-from abc import abstractmethod
-from typing import TYPE_CHECKING
-
 from asgiref.sync import (
     async_to_sync,
     sync_to_async,
@@ -11,14 +8,13 @@ from django.db import (
     transaction,
 )
 
-from addon_service.abstract.external_storage.models import ExternalService
+from addon_service.addon_imp.instantiation import get_addon_instance
 from addon_service.addon_operation.models import AddonOperationModel
 from addon_service.common.base_model import AddonsServiceBaseModel
 from addon_service.common.credentials_formats import CredentialsFormats
 from addon_service.common.service_types import ServiceTypes
 from addon_service.common.validators import validate_addon_capability
 from addon_service.credentials.models import ExternalCredentials
-from addon_service.external_storage_service.models import ExternalStorageService
 from addon_service.oauth1 import utils as oauth1_utils
 from addon_service.oauth2 import utils as oauth2_utils
 from addon_service.oauth2.models import (
@@ -35,10 +31,6 @@ from addon_toolkit.credentials import (
 )
 
 
-if TYPE_CHECKING:
-    from addon_service.user_reference.models import UserReference
-
-
 class AuthorizedAccountManager(models.Manager):
     def active(self):
         """filter to accounts owned by non-deactivated users"""
@@ -52,14 +44,39 @@ class AuthorizedAccount(AddonsServiceBaseModel):
     operations against the service and to aggregate accounts under a known user.
     """
 
-    if TYPE_CHECKING:
-        _credentials: ExternalCredentials
-        _temporary_oauth1_credentials: ExternalCredentials
-        account_owner: UserReference
-        oauth2_token_metadata: OAuth2TokenMetadata
+    account_owner = models.ForeignKey(
+        "addon_service.UserReference",
+        on_delete=models.CASCADE,
+        related_name="authorized_accounts",
+    )
+    _credentials = models.OneToOneField(
+        "addon_service.ExternalCredentials",
+        on_delete=models.CASCADE,
+        primary_key=False,
+        null=True,
+        blank=True,
+        related_name="authorized_account",
+    )
+    _temporary_oauth1_credentials = models.OneToOneField(
+        "addon_service.ExternalCredentials",
+        on_delete=models.CASCADE,
+        primary_key=False,
+        null=True,
+        blank=True,
+        related_name="temporary_authorized_account",
+    )
+    oauth2_token_metadata = models.ForeignKey(
+        "addon_service.OAuth2TokenMetadata",
+        on_delete=models.CASCADE,  # probs not
+        null=True,
+        blank=True,
+        related_name="authorized_accounts",
+    )
 
     objects = AuthorizedAccountManager()
-
+    external_service = models.ForeignKey(
+        "addon_service.ExternalService", on_delete=models.CASCADE
+    )
     _display_name = models.CharField(null=False, blank=True, default="")
     external_account_id = models.CharField(null=False, blank=True, default="")
     int_authorized_capabilities = models.IntegerField(
@@ -74,10 +91,6 @@ class AuthorizedAccount(AddonsServiceBaseModel):
     @display_name.setter
     def display_name(self, value: str):
         self._display_name = value
-
-    @property
-    @abstractmethod
-    def external_service(self): ...
 
     @property
     def credentials_format(self):
@@ -211,12 +224,7 @@ class AuthorizedAccount(AddonsServiceBaseModel):
 
     @property
     def imp_cls(self) -> type[AddonImp]:
-        if isinstance(self.external_service, ExternalService):
-            return self.external_service.addon_imp.imp_cls
-        try:
-            return self.authorizedstorageaccount.external_service.addon_imp.imp_cls
-        except ExternalStorageService.DoesNotExist:
-            return self.authorizedcitationaccount.external_service.addon_imp.imp_cls
+        return self.external_service.addon_imp.imp_cls
 
     @property
     def credentials_available(self) -> bool:
@@ -286,8 +294,13 @@ class AuthorizedAccount(AddonsServiceBaseModel):
                 }
             )
 
-    @abstractmethod
-    def execute_post_auth_hook(self, auth_extras: dict | None = None) -> None: ...
+    async def execute_post_auth_hook(self, auth_extras: dict | None = None):
+        imp = await get_addon_instance(
+            self.imp_cls,
+            self,
+        )
+        self.external_account_id = await imp.get_external_account_id(auth_extras or {})
+        await self.asave()
 
     ###
     # async functions for use in oauth2 callback flows

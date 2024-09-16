@@ -98,8 +98,8 @@ class ExternalCredentials(AddonsServiceBaseModel):
                 *filter(
                     bool,
                     [
-                        getattr(self, "authorized_storage_account", None),
-                        getattr(self, "temporary_authorized_storage_account", None),
+                        getattr(self, "authorized_account", None),
+                        getattr(self, "temporary_authorized_account", None),
                     ],
                 )
             ]

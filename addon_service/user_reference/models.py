@@ -28,6 +28,10 @@ class UserReference(AddonsServiceBaseModel):
             )
         ).filter(has_addon_configured_by_user=True)
 
+    @property
+    def authorized_storage_accounts(self):
+        return AuthorizedStorageAccount.objects.filter(account_owner=self)
+
     class Meta:
         verbose_name = "User Reference"
         verbose_name_plural = "User References"

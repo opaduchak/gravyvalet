@@ -10,17 +10,6 @@ class ConfiguredStorageAddon(ConfiguredAddon):
 
     root_folder = models.CharField(blank=True)
 
-    base_account = models.ForeignKey(
-        "addon_service.AuthorizedStorageAccount",
-        on_delete=models.CASCADE,
-        related_name="configured_storage_addons",
-    )
-    authorized_resource = models.ForeignKey(
-        "addon_service.ResourceReference",
-        on_delete=models.CASCADE,
-        related_name="configured_storage_addons",
-    )
-
     class Meta:
         verbose_name = "Configured Storage Addon"
         verbose_name_plural = "Configured Storage Addons"
@@ -32,6 +21,6 @@ class ConfiguredStorageAddon(ConfiguredAddon):
     @property
     def config(self) -> StorageConfig:
         return dataclasses.replace(
-            self.base_account.config,
+            self.base_account.authorizedstorageaccount.config,
             connected_root_id=self.root_folder,
         )

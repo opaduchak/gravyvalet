@@ -26,11 +26,28 @@ class ExternalService(AddonsServiceBaseModel):
         validators=[validate_service_type],
         verbose_name="Service type",
     )
+    int_addon_imp = models.IntegerField(
+        null=False,
+        verbose_name="Addon implementation",
+    )
     supported_scopes = ArrayField(models.CharField(), null=True, blank=True)
     api_base_url = models.URLField(blank=True, default="")
+    wb_key = models.CharField(null=False, blank=True, default="")
+    oauth1_client_config = models.ForeignKey(
+        "addon_service.OAuth1ClientConfig",
+        on_delete=models.SET_NULL,
+        related_name="external_services",
+        null=True,
+        blank=True,
+    )
 
-    class Meta:
-        abstract = True
+    oauth2_client_config = models.ForeignKey(
+        "addon_service.OAuth2ClientConfig",
+        on_delete=models.SET_NULL,
+        related_name="external_services",
+        null=True,
+        blank=True,
+    )
 
     def __repr__(self):
         return f'<{self.__class__.__qualname__}(pk="{self.pk}", display_name="{self.display_name}")>'

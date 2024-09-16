@@ -31,6 +31,7 @@ class AuthorizedCitationAccountSerializer(AuthorizedAccountSerializer):
     external_citation_service = ResourceRelatedField(
         queryset=ExternalCitationService.objects.all(),
         many=False,
+        source="external_service",
         related_link_view_name=view_names.related_view(RESOURCE_TYPE),
     )
     configured_citation_addons = HyperlinkedRelatedField(
@@ -61,7 +62,7 @@ class AuthorizedCitationAccountSerializer(AuthorizedAccountSerializer):
 
     def create_authorized_account(
         self,
-        external_citation_service: ExternalCitationService,
+        external_service: ExternalCitationService,
         authorized_capabilities: AddonCapabilities,
         display_name: str = "",
         api_base_url: str = "",
@@ -74,7 +75,7 @@ class AuthorizedCitationAccountSerializer(AuthorizedAccountSerializer):
         try:
             return AuthorizedCitationAccount.objects.create(
                 _display_name=display_name,
-                external_citation_service=external_citation_service,
+                external_service=external_service,
                 account_owner=account_owner,
                 authorized_capabilities=authorized_capabilities,
                 api_base_url=api_base_url,

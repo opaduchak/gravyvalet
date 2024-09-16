@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError as ModelValidationError
 from rest_framework_json_api import serializers
 
+from addon_service.abstract.external_storage.models import ExternalService
 from addon_service.common.credentials_formats import CredentialsFormats
 from addon_service.osf_models.fields import encrypt_string
 from addon_service.serializer_fields import (
     CredentialsField,
     EnumNameMultipleChoiceField,
 )
+from addon_service.user_reference.models import UserReference
 from addon_toolkit import AddonCapabilities
 
 
@@ -58,12 +59,28 @@ class AuthorizedAccountSerializer(serializers.HyperlinkedModelSerializer):
         "authorized_operations": "addon_service.serializers.AddonOperationSerializer",
     }
 
-    @abstractmethod
     def create_authorized_account(
         self,
+        external_service: ExternalService,
+        authorized_capabilities: AddonCapabilities,
+        display_name: str = "",
+        api_base_url: str = "",
         **kwargs,
     ) -> AuthorizedAccount:
-        """Handles creation of the appropriate AuthorizedAccount subclass"""
+        session_user_uri = self.context["request"].session.get("user_reference_uri")
+        account_owner, _ = UserReference.objects.get_or_create(
+            user_uri=session_user_uri
+        )
+        try:
+            return self.Meta.model.objects.create(
+                _display_name=display_name,
+                external_service=external_service,
+                account_owner=account_owner,
+                authorized_capabilities=authorized_capabilities,
+                api_base_url=api_base_url,
+            )
+        except ModelValidationError as e:
+            raise serializers.ValidationError(e)
 
     def create(self, validated_data: dict) -> AuthorizedAccount:
         authorized_account = self.create_authorized_account(**validated_data)
