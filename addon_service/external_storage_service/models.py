@@ -6,6 +6,7 @@ from enum import (
 from django.db import models
 
 from addon_service.abstract.external_storage.models import ExternalService
+from addon_service.authorized_storage_account.models import AuthorizedStorageAccount
 from addon_service.common.validators import (
     _validate_enum_value,
     validate_storage_imp_number,
@@ -26,7 +27,6 @@ class SupportedFeatures(Flag):
 
 def validate_supported_features(value):
     _validate_enum_value(SupportedFeatures, value)
-from addon_service.authorized_storage_account.models import AuthorizedStorageAccount
 
 
 class ExternalStorageService(ExternalService):

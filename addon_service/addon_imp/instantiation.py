@@ -30,8 +30,7 @@ if TYPE_CHECKING:
     )
 
 
-@sync_to_async
-def get_addon_instance(
+def get_addon_instance__blocking(
     imp_cls: type[AddonImp],
     account: AuthorizedAccount,
 ) -> AddonImp:
@@ -46,6 +45,9 @@ def get_addon_instance(
             imp_cls, account, account.config
         )
     raise ValueError(f"Unknown addon type {imp_cls}")
+
+
+get_addon_instance = sync_to_async(get_addon_instance__blocking)
 
 
 async def get_storage_addon_instance(
