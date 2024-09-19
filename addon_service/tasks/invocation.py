@@ -22,6 +22,7 @@ def perform_invocation__blocking(invocation: AddonOperationInvocation) -> None:
             _imp = get_addon_instance__blocking(
                 invocation.imp_cls,  # type: ignore[arg-type]  #(TODO: generic impstantiation)
                 invocation.account,
+                invocation.config,
             )
             _operation = invocation.operation
             # inner transaction to contain database errors,

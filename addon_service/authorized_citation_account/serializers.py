@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as ModelValidationError
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import (
     HyperlinkedRelatedField,
@@ -21,7 +20,6 @@ from addon_service.models import (
     ExternalCitationService,
     UserReference,
 )
-from addon_toolkit import AddonCapabilities
 
 
 RESOURCE_TYPE = get_resource_type_from_model(AuthorizedCitationAccount)
@@ -59,29 +57,6 @@ class AuthorizedCitationAccountSerializer(AuthorizedAccountSerializer):
         "configured_citation_addons": "addon_service.serializers.ConfiguredCitationAddonSerializer",
         "authorized_operations": "addon_service.serializers.AddonOperationSerializer",
     }
-
-    def create_authorized_account(
-        self,
-        external_service: ExternalCitationService,
-        authorized_capabilities: AddonCapabilities,
-        display_name: str = "",
-        api_base_url: str = "",
-        **kwargs,
-    ) -> AuthorizedCitationAccount:
-        session_user_uri = self.context["request"].session.get("user_reference_uri")
-        account_owner, _ = UserReference.objects.get_or_create(
-            user_uri=session_user_uri
-        )
-        try:
-            return AuthorizedCitationAccount.objects.create(
-                _display_name=display_name,
-                external_service=external_service,
-                account_owner=account_owner,
-                authorized_capabilities=authorized_capabilities,
-                api_base_url=api_base_url,
-            )
-        except ModelValidationError as e:
-            raise serializers.ValidationError(e)
 
     class Meta:
         model = AuthorizedCitationAccount

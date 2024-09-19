@@ -77,8 +77,8 @@ class SessionUserMayPerformInvocation(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         _user_uri = request.session.get("user_reference_uri")
-        _thru_addon = obj.addon
-        _thru_account = obj.account
+        _thru_addon = obj.thru_addon
+        _thru_account = obj.thru_account
         if _thru_addon is None:
             # when invoking thru account, must be the owner
             return _user_uri == _thru_account.owner_uri

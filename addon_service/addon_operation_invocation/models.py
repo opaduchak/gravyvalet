@@ -5,15 +5,19 @@ import jsonschema
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from addon_service.authorized_storage_account.models import AuthorizedStorageAccount
 from addon_service.common.base_model import AddonsServiceBaseModel
 from addon_service.common.invocation_status import InvocationStatus
 from addon_service.common.validators import validate_invocation_status
-from addon_service.configured_storage_addon.models import ConfiguredStorageAddon
 from addon_service.models import AddonOperationModel
 from addon_toolkit import AddonImp
-from addon_toolkit.interfaces.citation import CitationConfig
-from addon_toolkit.interfaces.storage import StorageConfig
+from addon_toolkit.interfaces.citation import (
+    CitationAddonImp,
+    CitationConfig,
+)
+from addon_toolkit.interfaces.storage import (
+    StorageAddonImp,
+    StorageConfig,
+)
 
 
 class AddonOperationInvocation(AddonsServiceBaseModel):
@@ -46,18 +50,20 @@ class AddonOperationInvocation(AddonsServiceBaseModel):
     def account(self):
         if not self.thru_account:
             return None
-        try:
+        imp_cls = self.thru_account.imp_cls
+        if issubclass(imp_cls, StorageAddonImp):
             return self.thru_account.authorizedstorageaccount
-        except AuthorizedStorageAccount.DoesNotExist:
+        elif issubclass(imp_cls, CitationAddonImp):
             return self.thru_account.authorizedcitationaccount
 
     @cached_property
     def addon(self):
         if not self.thru_addon:
             return None
-        try:
+        imp_cls = self.thru_addon.imp_cls
+        if issubclass(imp_cls, StorageAddonImp):
             return self.thru_addon.configuredstorageaddon
-        except ConfiguredStorageAddon.DoesNotExist:
+        elif issubclass(imp_cls, CitationAddonImp):
             return self.thru_addon.configuredcitationaddon
 
     @property
@@ -86,7 +92,7 @@ class AddonOperationInvocation(AddonsServiceBaseModel):
 
     @property
     def imp_cls(self) -> type[AddonImp]:
-        return self.account.imp_cls
+        return self.thru_account.imp_cls
 
     @property
     def config(self) -> StorageConfig | CitationConfig:
@@ -104,7 +110,7 @@ class AddonOperationInvocation(AddonsServiceBaseModel):
         except jsonschema.exceptions.ValidationError as _exception:
             raise ValidationError(_exception)
         if self.thru_addon is not None and (
-            self.addon.base_account_id != self.thru_account_id
+            self.thru_addon.base_account_id != self.thru_account_id
         ):
             raise ValidationError(
                 {"thru_addon": "thru_addon and thru_account must agree"}

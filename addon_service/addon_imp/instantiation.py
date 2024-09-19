@@ -30,24 +30,35 @@ if TYPE_CHECKING:
     )
 
 
-def get_addon_instance__blocking(
+async def get_addon_instance(
     imp_cls: type[AddonImp],
     account: AuthorizedAccount,
+    config: StorageConfig | CitationConfig,
 ) -> AddonImp:
+    if type(account) is AuthorizedAccount:
+        account = await sync_to_async(_get_account_subclassed_instance)(
+            account, imp_cls
+        )
+
     if issubclass(imp_cls, StorageAddonImp):
-        account = account.authorizedstorageaccount
-        return async_to_sync(get_storage_addon_instance)(
-            imp_cls, account, account.config
-        )
+        return await get_storage_addon_instance(imp_cls, account, config)
     elif issubclass(imp_cls, CitationAddonImp):
-        account = account.authorizedcitationaccount
-        return async_to_sync(get_citation_addon_instance)(
-            imp_cls, account, account.config
-        )
+        return await get_citation_addon_instance(imp_cls, account, config)
+    raise ValueError(f"unknown addon type {imp_cls}")
+
+
+get_addon_instance__blocking = async_to_sync(get_addon_instance)
+
+
+def _get_account_subclassed_instance(
+    account: AuthorizedAccount, imp_cls: type[AddonImp]
+) -> AuthorizedAccount:
+    if issubclass(imp_cls, StorageAddonImp):
+        return account.authorizedstorageaccount
+    elif issubclass(imp_cls, CitationAddonImp):
+        return account.authorizedcitationaccount
+
     raise ValueError(f"Unknown addon type {imp_cls}")
-
-
-get_addon_instance = sync_to_async(get_addon_instance__blocking)
 
 
 async def get_storage_addon_instance(
@@ -62,7 +73,7 @@ async def get_storage_addon_instance(
     assert issubclass(imp_cls, StorageAddonImp)
     assert (
         imp_cls is not StorageAddonImp
-    ), "Addons shouldn't directly extend storage addon imp, but "
+    ), "Addons shouldn't directly extend StorageAddonImp"
     if issubclass(imp_cls, StorageAddonHttpRequestorImp):
         imp = imp_cls(
             config=config,
