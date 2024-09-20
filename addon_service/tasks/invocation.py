@@ -21,7 +21,7 @@ def perform_invocation__blocking(invocation: AddonOperationInvocation) -> None:
         try:
             _imp = get_addon_instance__blocking(
                 invocation.imp_cls,  # type: ignore[arg-type]  #(TODO: generic impstantiation)
-                invocation.account,
+                invocation.thru_account,
                 invocation.config,
             )
             _operation = invocation.operation

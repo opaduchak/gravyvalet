@@ -8,6 +8,7 @@ from django.db import (
     transaction,
 )
 
+from addon_service.abstract.authorized_account.utils import get_config_for_account
 from addon_service.addon_imp.instantiation import get_addon_instance
 from addon_service.addon_operation.models import AddonOperationModel
 from addon_service.common.base_model import AddonsServiceBaseModel
@@ -297,8 +298,7 @@ class AuthorizedAccount(AddonsServiceBaseModel):
 
     async def execute_post_auth_hook(self, auth_extras: dict | None = None):
         imp = await get_addon_instance(
-            self.imp_cls,
-            self,
+            self.imp_cls, self, await sync_to_async(get_config_for_account)(self)
         )
         self.external_account_id = await imp.get_external_account_id(auth_extras or {})
         await self.asave()

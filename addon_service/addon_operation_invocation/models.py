@@ -1,23 +1,18 @@
 import traceback
-from functools import cached_property
 
 import jsonschema
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from addon_service.abstract.authorized_account.utils import get_config_for_account
+from addon_service.abstract.configured_addon.utils import get_config_for_addon
 from addon_service.common.base_model import AddonsServiceBaseModel
 from addon_service.common.invocation_status import InvocationStatus
 from addon_service.common.validators import validate_invocation_status
 from addon_service.models import AddonOperationModel
 from addon_toolkit import AddonImp
-from addon_toolkit.interfaces.citation import (
-    CitationAddonImp,
-    CitationConfig,
-)
-from addon_toolkit.interfaces.storage import (
-    StorageAddonImp,
-    StorageConfig,
-)
+from addon_toolkit.interfaces.citation import CitationConfig
+from addon_toolkit.interfaces.storage import StorageConfig
 
 
 class AddonOperationInvocation(AddonsServiceBaseModel):
@@ -45,26 +40,6 @@ class AddonOperationInvocation(AddonsServiceBaseModel):
 
     class JSONAPIMeta:
         resource_name = "addon-operation-invocations"
-
-    @cached_property
-    def account(self):
-        if not self.thru_account:
-            return None
-        imp_cls = self.thru_account.imp_cls
-        if issubclass(imp_cls, StorageAddonImp):
-            return self.thru_account.authorizedstorageaccount
-        elif issubclass(imp_cls, CitationAddonImp):
-            return self.thru_account.authorizedcitationaccount
-
-    @cached_property
-    def addon(self):
-        if not self.thru_addon:
-            return None
-        imp_cls = self.thru_addon.imp_cls
-        if issubclass(imp_cls, StorageAddonImp):
-            return self.thru_addon.configuredstorageaddon
-        elif issubclass(imp_cls, CitationAddonImp):
-            return self.thru_addon.configuredcitationaddon
 
     @property
     def invocation_status(self):
@@ -97,8 +72,8 @@ class AddonOperationInvocation(AddonsServiceBaseModel):
     @property
     def config(self) -> StorageConfig | CitationConfig:
         if self.thru_addon:
-            return self.addon.config
-        return self.account.config
+            return get_config_for_addon(self.thru_addon)
+        return get_config_for_account(self.thru_account)
 
     def clean_fields(self, *args, **kwargs):
         super().clean_fields(*args, **kwargs)

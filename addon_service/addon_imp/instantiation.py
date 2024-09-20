@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from asgiref.sync import (
-    async_to_sync,
-    sync_to_async,
-)
+from asgiref.sync import async_to_sync
 
 from addon_service.common.aiohttp_session import get_singleton_client_session
 from addon_service.common.network import GravyvaletHttpRequestor
@@ -35,11 +32,6 @@ async def get_addon_instance(
     account: AuthorizedAccount,
     config: StorageConfig | CitationConfig,
 ) -> AddonImp:
-    if type(account) is AuthorizedAccount:
-        account = await sync_to_async(_get_account_subclassed_instance)(
-            account, imp_cls
-        )
-
     if issubclass(imp_cls, StorageAddonImp):
         return await get_storage_addon_instance(imp_cls, account, config)
     elif issubclass(imp_cls, CitationAddonImp):
@@ -48,17 +40,6 @@ async def get_addon_instance(
 
 
 get_addon_instance__blocking = async_to_sync(get_addon_instance)
-
-
-def _get_account_subclassed_instance(
-    account: AuthorizedAccount, imp_cls: type[AddonImp]
-) -> AuthorizedAccount:
-    if issubclass(imp_cls, StorageAddonImp):
-        return account.authorizedstorageaccount
-    elif issubclass(imp_cls, CitationAddonImp):
-        return account.authorizedcitationaccount
-
-    raise ValueError(f"Unknown addon type {imp_cls}")
 
 
 async def get_storage_addon_instance(
