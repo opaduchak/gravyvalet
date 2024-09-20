@@ -1,6 +1,13 @@
-from addon_service.abstract.configured_addon.models import ConfiguredAddon
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from addon_toolkit.interfaces.citation import CitationAddonImp
 from addon_toolkit.interfaces.storage import StorageAddonImp
+
+
+if TYPE_CHECKING:
+    from addon_service.abstract.configured_addon.models import ConfiguredAddon
 
 
 def get_config_for_addon(addon: ConfiguredAddon):
