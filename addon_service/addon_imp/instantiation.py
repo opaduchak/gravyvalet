@@ -20,7 +20,7 @@ from addon_toolkit.interfaces.storage import (
 
 
 if TYPE_CHECKING:
-    from addon_service.abstract.authorized_account.models import AuthorizedAccount
+    from addon_service.authorized_account.models import AuthorizedAccount
     from addon_service.models import (
         AuthorizedCitationAccount,
         AuthorizedStorageAccount,

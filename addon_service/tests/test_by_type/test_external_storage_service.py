@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 
 from addon_service import models as db
 from addon_service.common.credentials_formats import CredentialsFormats
-from addon_service.external_storage_service.views import ExternalStorageServiceViewSet
+from addon_service.external_service.storage.views import ExternalStorageServiceViewSet
 from addon_service.tests import _factories
 from addon_service.tests._helpers import get_test_request
 

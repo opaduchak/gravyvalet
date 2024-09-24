@@ -1,7 +1,7 @@
 from django.db import models
 
 from addon_service.common.base_model import AddonsServiceBaseModel
-from addon_service.configured_storage_addon.models import ConfiguredStorageAddon
+from addon_service.configured_addon.storage.models import ConfiguredStorageAddon
 
 
 class ResourceReference(AddonsServiceBaseModel):

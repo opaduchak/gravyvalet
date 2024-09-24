@@ -19,7 +19,7 @@ from .utils import FreshTokenResult
 
 
 if TYPE_CHECKING:
-    from addon_service.abstract.authorized_account.models import AuthorizedAccount
+    from addon_service.authorized_account.models import AuthorizedAccount
 
 
 class OAuth2ClientConfig(AddonsServiceBaseModel):

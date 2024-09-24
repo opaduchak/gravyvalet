@@ -17,7 +17,7 @@ class ExternalCredentials(AddonsServiceBaseModel):
     _scrypt_parallelization = models.IntegerField()
 
     # Attributes inherited from back-references:
-    # authorized_storage_account (AuthorizedStorageAccount._credentials, One2One)
+    # storage (AuthorizedStorageAccount._credentials, One2One)
 
     class Meta:
         verbose_name = "External Credentials"

@@ -8,7 +8,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from addon_service import models as db
-from addon_service.authorized_storage_account.views import (
+from addon_service.authorized_account.storage.views import (
     AuthorizedStorageAccountViewSet,
 )
 from addon_service.common.credentials_formats import CredentialsFormats

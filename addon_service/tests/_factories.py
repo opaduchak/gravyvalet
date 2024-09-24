@@ -6,7 +6,7 @@ from addon_service import models as db
 from addon_service.common import known_imps
 from addon_service.common.credentials_formats import CredentialsFormats
 from addon_service.common.service_types import ServiceTypes
-from addon_service.external_storage_service.models import SupportedFeatures
+from addon_service.external_service.storage.models import SupportedFeatures
 from addon_toolkit import AddonCapabilities
 
 from ._helpers import patch_encryption_key_derivation
