@@ -27,14 +27,6 @@ class DataverseStorageImp(storage.StorageAddonHttpRequestorImp):
     see https://guides.dataverse.org/en/latest/api/native-api.html
     """
 
-    @staticmethod
-    def make_headers(raw_headers: dict):
-        header_value = raw_headers.get("Authorization")
-        return {"X-Dataverse-key": header_value.split(" ")[-1]}
-
-    def __post_init__(self):
-        self.network.add_header_transformation_callback(self.make_headers)
-
     async def get_external_account_id(self, _: dict[str, str]) -> str:
         return ""
 

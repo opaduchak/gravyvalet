@@ -68,10 +68,6 @@ class GravyvaletHttpRequestor(HttpRequestor):
         account: "db.AuthorizedStorageAccount",
     ):
         _PrivateNetworkInfo(client_session, prefix_url, account).assign(self)
-        self._headers_constructor = None
-
-    def add_header_transformation_callback(self, callback):
-        self._headers_constructor = callback
 
     # abstract method from HttpRequestor:
     @contextlib.asynccontextmanager
@@ -93,7 +89,7 @@ class GravyvaletHttpRequestor(HttpRequestor):
         async with _private.client_session.request(
             request.http_method,
             _url,
-            headers=await self._get_headers(_private),
+            headers=await _private.get_headers(),
             params=request.query,
             json=request.json,
             # TODO: content
@@ -106,12 +102,6 @@ class GravyvaletHttpRequestor(HttpRequestor):
                 # if not, will fail again after refresh (which is fine)
                 raise exceptions.ExpiredAccessToken
             yield _AiohttpResponseInfo(_response)
-
-    async def _get_headers(self, _private: _PrivateNetworkInfo) -> Multidict:
-        raw_headers = await _private.get_headers()
-        if self._headers_constructor:
-            return self._headers_constructor(raw_headers)
-        return raw_headers
 
 
 ###
@@ -168,7 +158,11 @@ class _PrivateNetworkInfo(_PrivateInfo):
         _headers = Multidict()
         _credentials = self.account.credentials
         if _credentials:
-            _headers.add_many(self.account.credentials.iter_headers())
+            _headers.add_many(
+                self.account.external_service.credentials_format.iter_headers(
+                    _credentials
+                )
+            )
         return _headers
 
     def get_full_url(self, relative_url: str) -> str:
