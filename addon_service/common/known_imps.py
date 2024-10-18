@@ -85,7 +85,7 @@ class AddonImpNumbers(enum.Enum):
     MENDELEY = 1004
     GOOGLE_DRIVE = 1005
     FIGSHARE = 1007
-    DATAVERSE = 1008
+    DATAVERSE = 1010
 
     if __debug__:
         BLARG = -7
