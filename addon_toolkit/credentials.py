@@ -15,7 +15,7 @@ class AccessTokenCredentials(Credentials):
     access_token: str
 
     def iter_headers(self):
-        yield "Authorization", f"Bearer {self.access_token}"
+        yield "PRIVATE-TOKEN", f"{self.access_token}"
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
