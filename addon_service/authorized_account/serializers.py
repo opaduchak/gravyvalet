@@ -83,7 +83,7 @@ class AuthorizedAccountSerializer(serializers.HyperlinkedModelSerializer):
             raise serializers.ValidationError(e)
 
     def create(self, validated_data: dict) -> AuthorizedAccount:
-        validated_data = self.fix_dotted_base_account(validated_data)
+        validated_data = self.fix_dotted_external_service(validated_data)
         authorized_account = self.create_authorized_account(**validated_data)
         return self.process_and_set_auth(authorized_account, validated_data)
 
