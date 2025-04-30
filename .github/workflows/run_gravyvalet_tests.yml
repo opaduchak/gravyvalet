@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:  # use to test upgrades before upgrading
-        python-version: ['3.12']
+        python-version: ['3.13']
         postgres-version: ['15']
     runs-on: ubuntu-latest
     services:
